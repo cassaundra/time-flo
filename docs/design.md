@@ -1,5 +1,5 @@
 # The TimeFlo Project: Design
-*Author Name 2021*
+*Cassaundra Smith 2021*
 
 ## Introduction
 

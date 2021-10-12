@@ -1,5 +1,5 @@
 # The TimeFlo Project: Validation and Verification
-*Author Name 2021*
+*Cassaundra Smith 2021*
 
 (*Thanks to Chris Gilmore for the document template for this
 document.*)

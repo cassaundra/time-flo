@@ -1,5 +1,5 @@
 # The TimeFlo Project: Project Plan
-*Author Name 2021*
+*Cassaundra Smith 2021*
 
 (*Thanks to Chris Gilmore for part of the document template
 for this document.*)
