@@ -1,0 +1,6 @@
+data/io.cassaundra.TimeFlo.desktop.in.in
+data/io.cassaundra.TimeFlo.gschema.xml.in
+data/io.cassaundra.TimeFlo.metainfo.xml.in.in
+data/resources/ui/shortcuts.ui
+data/resources/ui/window.ui
+src/application.rs
