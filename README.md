@@ -25,27 +25,54 @@ for this project.*
 This project is built on GTK, adapted from
 [gtk-rust-template](https://gitlab.gnome.org/bilelmoussaoui/gtk-rust-template).
 
-### Manual build
+### Build with Ninja + Meson
 
-Install the requisite dependencies via Flatpak:
+Ensure you have the requisite dependencies installed:
+- The latest Rust toolchain (at least stable).
+- The latest [GTK 4](https://www.gtk.org/docs/installations/) development
+  package).
+- The [Ninja](https://ninja-build.org/) build system.
+- The [Meson](https://mesonbuild.com/) build system.
+
+After cloning the repository to your local system:
+
+You can either install it system-wide:
+```sh
+meson --prefix=/usr build
+ninja -C build
+sudo ninja -C build install
+```
+
+Or per-user:
+```sh
+meson --prefix=~/.local build
+ninja -C build install
+```
+
+To uninstall, use the following command either as the user or with sudo:
+```
+ninja -C build uninstall
+```
+
+### Build with Flatpak
+
+Install the requisite dependencies:
 
 ```
 flatpak install org.gnome.Sdk//40 org.freedesktop.Sdk.Extension.rust-stable//20.08 org.gnome.Platform//40
 ```
 
-Build:
+Build and install:
 ```
-flatpak-builder --user flatpak_app build-aux/io.cassaundra.TimeFlo.Devel.json
+flatpak-builder --user --install --force-clean flatpak_app build-aux/io.cassaundra.TimeFlo.Devel.json
 ```
 
-Run (after building):
-```
-flatpak-builder --run flatpak_app build-aux/io.cassaundra.TimeFlo.Devel.json time-flo
-```
+To uninstall, simply use Flatpak's package management tools.
 
 ### Build with IDE
 
-The program can be built with Gnome Builder out of the box, and *probably* VS Code as well, though this is so far untested.
+The program can be built with GNOME Builder out of the box, and *probably* VS
+Code as well, though this is so far untested.
 
 ## Development Docs
 
