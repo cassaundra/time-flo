@@ -2,7 +2,7 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{gio, glib};
 
-use crate::application::ExampleApplication;
+use crate::application::TimeFloApplication;
 use crate::config::{APP_ID, PROFILE};
 
 mod imp {
@@ -12,13 +12,13 @@ mod imp {
 
     #[derive(Debug, CompositeTemplate)]
     #[template(resource = "/io/cassaundra/TimeFlo/ui/window.ui")]
-    pub struct ExampleApplicationWindow {
+    pub struct TimeFloApplicationWindow {
         #[template_child]
         pub headerbar: TemplateChild<gtk::HeaderBar>,
         pub settings: gio::Settings,
     }
 
-    impl Default for ExampleApplicationWindow {
+    impl Default for TimeFloApplicationWindow {
         fn default() -> Self {
             Self {
                 headerbar: TemplateChild::default(),
@@ -28,9 +28,9 @@ mod imp {
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for ExampleApplicationWindow {
-        const NAME: &'static str = "ExampleApplicationWindow";
-        type Type = super::ExampleApplicationWindow;
+    impl ObjectSubclass for TimeFloApplicationWindow {
+        const NAME: &'static str = "TimeFloApplicationWindow";
+        type Type = super::TimeFloApplicationWindow;
         type ParentType = gtk::ApplicationWindow;
 
         fn class_init(klass: &mut Self::Class) {
@@ -43,7 +43,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ExampleApplicationWindow {
+    impl ObjectImpl for TimeFloApplicationWindow {
         fn constructed(&self, obj: &Self::Type) {
             self.parent_constructed(obj);
 
@@ -57,8 +57,8 @@ mod imp {
         }
     }
 
-    impl WidgetImpl for ExampleApplicationWindow {}
-    impl WindowImpl for ExampleApplicationWindow {
+    impl WidgetImpl for TimeFloApplicationWindow {}
+    impl WindowImpl for TimeFloApplicationWindow {
         // Save window state on delete event
         fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
             if let Err(err) = window.save_window_size() {
@@ -70,23 +70,23 @@ mod imp {
         }
     }
 
-    impl ApplicationWindowImpl for ExampleApplicationWindow {}
+    impl ApplicationWindowImpl for TimeFloApplicationWindow {}
 }
 
 glib::wrapper! {
-    pub struct ExampleApplicationWindow(ObjectSubclass<imp::ExampleApplicationWindow>)
+    pub struct TimeFloApplicationWindow(ObjectSubclass<imp::TimeFloApplicationWindow>)
         @extends gtk::Widget, gtk::Window, gtk::ApplicationWindow,
         @implements gio::ActionMap, gio::ActionGroup;
 }
 
-impl ExampleApplicationWindow {
-    pub fn new(app: &ExampleApplication) -> Self {
+impl TimeFloApplicationWindow {
+    pub fn new(app: &TimeFloApplication) -> Self {
         glib::Object::new(&[("application", app)])
-            .expect("Failed to create ExampleApplicationWindow")
+            .expect("Failed to create TimeFloApplicationWindow")
     }
 
     fn save_window_size(&self) -> Result<(), glib::BoolError> {
-        let self_ = imp::ExampleApplicationWindow::from_instance(self);
+        let self_ = imp::TimeFloApplicationWindow::from_instance(self);
 
         let (width, height) = self.default_size();
 
@@ -101,7 +101,7 @@ impl ExampleApplicationWindow {
     }
 
     fn load_window_size(&self) {
-        let self_ = imp::ExampleApplicationWindow::from_instance(self);
+        let self_ = imp::TimeFloApplicationWindow::from_instance(self);
 
         let width = self_.settings.int("window-width");
         let height = self_.settings.int("window-height");
