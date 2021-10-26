@@ -1,3 +1,4 @@
+use adw::traits::ApplicationWindowExt;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt};
 use relm4::{send, AppUpdate, Model, RelmApp, Sender, WidgetPlus, Widgets};
 
@@ -31,23 +32,22 @@ impl AppUpdate for AppModel {
     }
 }
 
+fn application_window() -> adw::ApplicationWindow {
+    adw::ApplicationWindow::builder().build()
+}
+
 #[relm4_macros::widget]
 impl Widgets<AppModel, ()> for AppWidgets {
     view! {
-        gtk::ApplicationWindow {
+        main_window = application_window() -> adw::ApplicationWindow {
             set_title: Some("TimeFlo"),
             set_default_width: 400,
             set_default_height: 300,
             set_resizable: false,
-            set_child = Some(&gtk::Box) {
+            set_content: main_box = Some(&gtk::Box) {
                 set_orientation: gtk::Orientation::Vertical,
-                // set_margin_all: 5,
-                // set_spacing: 5,
-
                 append = &adw::HeaderBar {
-                    set_title_widget = Some(&adw::WindowTitle::new("TimeFlo",
-                                                                   "Focus better")) {
-                    }
+                    set_title_widget = Some(&adw::WindowTitle::new("TimeFlo", "Focus better")) {},
                 },
                 append = &gtk::Button {
                     set_label: "Increment",
