@@ -1,11 +1,16 @@
 stages:
   - build
 
+default:
+  before_script:
+    - rustc --version
+    - cargo --version
+
 rust-latest:
   stage: build
   image: rust:latest
   tags:
     - rust
   script:
-    - cargo build --verbose
-    - cargo test --verbose
+    - cargo build
+    - cargo test
