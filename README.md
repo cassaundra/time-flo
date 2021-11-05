@@ -22,9 +22,6 @@ doesn't. Describe "future work" for this project.*
 
 Ensure you have the requisite dependencies installed:
 - The latest Rust toolchain (at least stable).
-- The latest [GTK 4](https://www.gtk.org/docs/installations/) development
-  package).
-- The latest [libadwaita](https://gitlab.gnome.org/GNOME/libadwaita).
 
 To build:
 ```shell
