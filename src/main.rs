@@ -3,7 +3,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 fn main() {
-    let app = time_flo::TemplateApp::default();
+    let app = time_flo::TimeFloApp::default();
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(Box::new(app), native_options);
 }
