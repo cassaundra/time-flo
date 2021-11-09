@@ -20,8 +20,21 @@ doesn't. Describe "future work" for this project.*
 
 ## Build and Run
 
+Ensure you have the latest Rust toolchain (stable or nightly will work fine).
+Then, install the following dependencies according to [egui's template](https://github.com/emilk/eframe_template/):
+
+On most apt-based Linux distributions:
+```
+sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+```
+
+On Fedora:
+```
+dnf install clang clang-devel clang-tools-extra speech-dispatcher-devel libxkbcommon-devel pkg-config openssl-devel
+```
+
 Ensure you have the requisite dependencies installed:
-- The latest Rust toolchain (at least stable).
+- The latest Rust toolchain (at least stable)
 
 To build:
 ```shell
