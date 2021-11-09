@@ -4,7 +4,7 @@ use eframe::{egui, epi};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(PartialEq, Deserialize, Serialize)]
 pub struct Timer {
     /// The total duration of this timer
     #[serde(with = "serde_millis")]
@@ -19,16 +19,18 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn from_duration(duration: Duration) -> Self {
+    pub fn start(duration: Duration) -> Self {
         Self {
             duration,
             accumulated_time: Duration::ZERO,
-            start_timestamp: None,
+            start_timestamp: Some(Instant::now()),
         }
     }
 
-    pub fn start(&mut self) {
-        self.start_timestamp = Some(Instant::now());
+    pub fn resume(&mut self) {
+        if self.start_timestamp.is_none() {
+            self.start_timestamp = Some(Instant::now());
+        }
     }
 
     pub fn pause(&mut self) {
@@ -41,7 +43,7 @@ impl Timer {
     }
 
     pub fn remaining_time(&self) -> Duration {
-        return self.duration - self.elapsed();
+        return self.duration.saturating_sub(self.elapsed());
     }
 
     pub fn is_over(&self) -> bool {
@@ -63,7 +65,7 @@ impl Timer {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(PartialEq, Deserialize, Serialize)]
 enum ProgramState {
     Idle,
     Task(Timer),
@@ -72,36 +74,18 @@ enum ProgramState {
 }
 
 impl ProgramState {
-    /// Retrieve the duration of this interval as defined by the user preferences.
-    pub fn duration(&self, preferences: &Preferences) -> f32 {
-        match self {
-            Idle => f32::INFINITY,
-            Task => preferences.task_duration,
-            ShortBreak => preferences.short_break_duration,
-            LongBreak => preferences.long_break_duration,
-        }
+    pub fn task(preferences: &Preferences) -> ProgramState {
+        ProgramState::Task(Timer::start(preferences.task_duration()))
     }
 
-    pub fn interval(&self) -> Option<&Timer> {
-        use ProgramState::*;
-
-        match self {
-            Task(interval) | ShortBreak(interval) | LongBreak(interval) => {
-                Some(interval)
-            }
-            _ => None,
-        }
+    pub fn short_break(preferences: &Preferences) -> ProgramState {
+        ProgramState::ShortBreak(Timer::start(
+            preferences.short_break_duration(),
+        ))
     }
 
-    pub fn interval_mut(&mut self) -> Option<&mut Timer> {
-        use ProgramState::*;
-
-        match self {
-            Task(interval) | ShortBreak(interval) | LongBreak(interval) => {
-                Some(interval)
-            }
-            _ => None,
-        }
+    pub fn long_break(preferences: &Preferences) -> ProgramState {
+        ProgramState::LongBreak(Timer::start(preferences.long_break_duration()))
     }
 }
 
@@ -113,13 +97,39 @@ pub struct TimeFloApp {
     preferences: Preferences,
     /// The current state of the program.
     state: ProgramState,
+    /// Number of short breaks which have occurred since the last long break, or
+    /// the start of the program.
+    short_break_counter: u32,
 }
 
 impl Default for TimeFloApp {
     fn default() -> Self {
         Self {
             state: ProgramState::Idle,
-            ..Default::default()
+            preferences: Preferences::default(),
+            short_break_counter: 0,
+        }
+    }
+}
+
+impl TimeFloApp {
+    fn next_state(&mut self) -> ProgramState {
+        use ProgramState::*;
+
+        match self.state {
+            Idle | ShortBreak(_) | LongBreak(_) => {
+                ProgramState::task(&self.preferences)
+            }
+            Task(_) => {
+                if self.short_break_counter < self.preferences.num_short_breaks
+                {
+                    self.short_break_counter += 1;
+                    ProgramState::short_break(&self.preferences)
+                } else {
+                    self.short_break_counter = 0;
+                    ProgramState::long_break(&self.preferences)
+                }
+            }
         }
     }
 }
@@ -131,11 +141,11 @@ pub struct Preferences {
     /// Whether or not to display the user interface in dark mode.
     dark_mode: bool,
     /// Duration of a task interval in minutes.
-    task_duration: f32,
+    task_minutes: f32,
     /// Duration of a short break in minutes.
-    short_break_duration: f32,
+    short_break_minutes: f32,
     /// Duration of a long break in minutes.
-    long_break_duration: f32,
+    long_break_minutes: f32,
     /// Number of short breaks before a long break.
     num_short_breaks: u32,
 }
@@ -144,11 +154,25 @@ impl Default for Preferences {
     fn default() -> Self {
         Self {
             dark_mode: true,
-            task_duration: 25.,
-            short_break_duration: 5.,
-            long_break_duration: 15.,
+            task_minutes: 25.,
+            short_break_minutes: 5.,
+            long_break_minutes: 15.,
             num_short_breaks: 3,
         }
+    }
+}
+
+impl Preferences {
+    pub fn task_duration(&self) -> Duration {
+        Duration::from_secs_f32(self.task_minutes * 60.)
+    }
+
+    pub fn short_break_duration(&self) -> Duration {
+        Duration::from_secs_f32(self.short_break_minutes * 60.)
+    }
+
+    pub fn long_break_duration(&self) -> Duration {
+        Duration::from_secs_f32(self.long_break_minutes * 60.)
     }
 }
 
@@ -175,13 +199,59 @@ impl epi::App for TimeFloApp {
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, frame: &mut epi::Frame<'_>) {
-        let Self { prefs, state } = self;
+        if self.state != ProgramState::Idle {
+            ctx.request_repaint();
+        }
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.heading("TimeFlo");
             });
-            ui.label("Watch this space!");
+
+            let format_with_time = |name: &str, timer: &Timer| {
+                format!(
+                    "{} ({:.1} remaining)",
+                    name,
+                    timer.remaining_time().as_secs_f32()
+                )
+            };
+
+            let state_label = match &mut self.state {
+                ProgramState::Idle => String::from("Idle"),
+                ProgramState::Task(timer) => format_with_time("Task", timer),
+                ProgramState::ShortBreak(timer) => {
+                    format_with_time("Short break", timer)
+                }
+                ProgramState::LongBreak(timer) => {
+                    format_with_time("Long break", timer)
+                }
+            };
+            ui.label(&format!("State: {}", state_label));
+
+            match &mut self.state {
+                ProgramState::Idle => {
+                    if ui.button("Start").clicked() {
+                        self.state = self.next_state();
+                    }
+                }
+                ProgramState::Task(timer)
+                | ProgramState::ShortBreak(timer)
+                | ProgramState::LongBreak(timer) => {
+                    if !timer.is_paused() {
+                        if ui.button("Pause").clicked() {
+                            timer.pause();
+                        }
+                    } else {
+                        if ui.button("Resume").clicked() {
+                            timer.resume();
+                        }
+                    }
+
+                    if ui.button("Skip").clicked() || timer.is_over() {
+                        self.state = self.next_state();
+                    }
+                }
+            }
 
             egui::warn_if_debug_build(ui);
         });
