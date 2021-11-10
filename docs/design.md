@@ -3,15 +3,31 @@
 
 ## Introduction
 
-*Introduce this document and the project it describes. You
-should also summarize the remaining content of the document
-here.*
+This document serves as a design overview for the TimeFlo project, providing
+some insight into the intended user experience. This document should not be read
+as a technical specification, but rather a high-level explanation of the
+required features, irrespective of the underlying implementation.
 
 ## Architecture
 
-*Describe the overall architecture of the proposed
-implementation.*
+### Timer cycle
 
-*For each component identified in the architecture, describe
-briefly what it will do, how it will work, and
-implementation risks associated with it.*
+The TimeFlo program can effectively be reduced to a state machine driven by a
+timer. During its operation, it will cycle between the following states after
+specified intervals of time:
+
+- **Task** (25 minutes): the user is currently working
+- **Break** (5/15 minutes): the user is taking a short or a long break
+
+An audiovisual alert is presented to the user whenever the timer goes off, and
+the timer is paused, awaiting user confirmation to continue to the next state.
+The user can pause or cancel the timer at any time.
+
+### Special states
+
+The user can open up a preferences dialog at any time during the program's
+execution and modify the following properties:
+
+- The intervals of time for each state.
+- How many short breaks occur between each long break.
+- The style of the user interface. (optional)
