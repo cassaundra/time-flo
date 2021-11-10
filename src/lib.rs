@@ -4,3 +4,5 @@
 
 mod app;
 pub use app::TimeFloApp;
+
+pub mod timer;
