@@ -102,7 +102,8 @@ mod tests {
         assert!(t2.is_paused());
         assert!(!t2.is_running());
         assert!(t2.has_started());
-        assert_eq!(Duration::from_secs(8), t2.elapsed());
+        assert_eq!(Duration::from_secs(12), t2.elapsed());
+        assert_eq!(Duration::from_secs(8), t2.remaining_time());
 
         t2.start();
         assert!(!t2.is_paused());
