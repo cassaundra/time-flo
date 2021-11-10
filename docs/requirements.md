@@ -1,54 +1,48 @@
 # The TimeFlo Project: Requirements Document
 *Cassaundra Smith 2021*
 
-(*Thanks to Chris Gilmore for the document template for this
-document.*)
-
 ## Introduction
 
-*Introduce this document and the project it describes. You should also
-summarize the remaining content of the document here.*
+TimeFlo is an implementation of a
+[Pomodoro&reg;](https://en.wikipedia.org/wiki/Pomodoro_Technique)-like timer for
+breaking out of flow state.
 
 ### Purpose and Scope
 
-*You should describe this document by giving its purpose, scope.*
+This document summarizes the practical requirements for the TimeFlo program, to
+be referenced during development.
 
 ### Target Audience
 
-*Describe the target audience for this document.*
-
-### Terms and Definitions
-
-*Define any terms or acronyms you will be using in the remainder of this
-document.*
+The target audience of this document is those who are working on or evaluating
+this TimeFlo implementation.
 
 ## Product Overview
 
-*Give a high level description of the functionality of the project here.
-Describe the purpose of this section. It may be useful to give your
-definition of a user, a stake holder and a use case. If there are scope
-limitations to the project, i.e. things you will not be doing, or are
-not required to do, this is a good section to put those.*
+The TimeFlo program is controlled via a simple user interface that will be in
+the background for most of the duration of its usage, except when it calls
+attention to the user when the timer goes off.
 
 ### Users and Stakeholders
 
-*Describe the purpose of this section. Only a few sentences are expected
-here.*
+TimeFlo is targeted in its functionality to any user who wants to be more
+productive in managing their flow state. In particular, this project is targeted
+to users who are accustomed to performing technical tasks on their computer, and
+do not mind doing so in the installation, configuration, and use of this
+software.
 
-#### *Stakeholder 1*
-
-*List the first stakeholder or class of stakeholders if necessary.
-Describe, exactly, their role in the development, deployment, use,
-maintenance, etc. of the software.*
-
-#### *Stakeholder 2*
-
-*Etc.*
+Another user of this project is the author, Cassaundra, though she will probably
+rewrite it as a TUI program before using it.
 
 ### Use cases
 
-*Describe the purpose of this section. Only a few sentences are expected
-here.*
+The user has some sort of task they would like to complete, and want to stay
+more focused while they are working on it. The user opens TimeFlo, begins a task
+session, and works until they are interrupted by the timer going off. Then, they
+take a short or long break, and finally return back to work to repeat the
+process until they have either made significant progress on their project, or
+have entered a flow state strong enough that they no longer feel that they need
+the assistance of TimeFlo.
 
 #### *Use Case 1*
 
@@ -61,32 +55,45 @@ participants, human or otherwise, and explain their roles.*
 
 ## Functional Requirements
 
-*Describe the purpose of this section and outline its contents. Only a
-few sentences are expected here. It may help to define a functional
-requirement.*
+Contained within this section are the functional requirements for this project.
 
-### *Functional Requirements 1*
+### Basic compilation and user interface
 
-*Describe the first functional requirement. This is the meat of the
-document, so be sure to use precise language. Include diagrams when
-appropriate. Break this into a list of sub-requirements as needed.*
+- The program should successfully compile on the Rust toolchain, with the
+  requirements outlined in the README.
+- A placeholder user interface should render correctly on the targeted
+  platforms.
+- A framework should be in place within the codebase from which development will
+  begin.
 
-### *Functional Requirement 2*
+### Program state machine and workflow
 
-*Etc.*
+- The underlying data model of the program is implemented, containing the state
+  machine that serves as the basis for the program workflow.
+- A sensible timer is implemented.
+
+### Improved user interface
+
+- The user can interact fully with the underlying data model with the user
+  interface.
+- The user interface is visually appealing and conveys the intended usage in its
+  design.
+- System notifications are presented to the user whenever the timer goes off.
 
 ## Extra-functional Requirements
 
-*Describe the purpose of this section and outline its contents. Only a
-few sentences are expected here. It may help to define a nonfunctional
-requirement.*
+Contained within this section are the extra and optional functional requirements
+for this project.
 
-### *Extra-functional Requirement 1*
+### Preferences dialog
 
-*Describe the first nonfunctional requirement. This is the meat of the
-document, so be sure to use precise language. Include diagrams when
-appropriate.*
+- The user can modify the behavior of the program, including but not necessarily
+  limited to the intervals at which the timer goes off, and the number of short
+  breaks between each long break.
+- These modifications are made via a user interface.
+- These modifications are saved and loaded from disk.
 
-### *Extra-functional Requirement 2*
+### Audio notifications
 
-*Etc.*
+- The system notifications previously outlined are accompanied by a custom alert
+  sound.

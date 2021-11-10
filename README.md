@@ -9,10 +9,7 @@ breaking out of flow state.
 
 ## Status and Roadmap
 
-*Status of the MVP. Describe what works and what
-doesn't. Describe "future work" for this project.*
-
-* [ ] Requirements complete.
+* [x] Requirements complete.
 * [ ] Project plan complete.
 * [x] Design complete.
 * [ ] Implementation complete.
