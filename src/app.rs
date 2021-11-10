@@ -1,10 +1,12 @@
+use std::fmt;
 use std::time::{Duration, Instant};
 
 use eframe::{
-    egui::{self, Color32},
+    egui::{self, Color32, Layout},
     epi,
 };
 
+use notify_rust::Notification;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Copy, Clone, PartialEq, Deserialize, Serialize)]
@@ -90,6 +92,19 @@ impl Default for State {
     }
 }
 
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            State::Idle => "Idle",
+            State::Task => "Task period",
+            State::ShortBreak => "Short break",
+            State::LongBreak => "Long break",
+        };
+
+        write!(f, "{}", name)
+    }
+}
+
 impl State {
     pub fn is_break(&self) -> bool {
         return *self == State::ShortBreak || *self == State::LongBreak;
@@ -103,11 +118,14 @@ pub struct TimeFloApp {
     /// User-defined preferences.
     preferences: Preferences,
     /// The current state of the program.
+    #[serde(skip)]
     state: State,
     /// The underlying timer.
+    #[serde(skip)]
     timer: Timer,
     /// Number of short breaks which have occurred since the last long break, or
     /// the start of the program.
+    #[serde(skip)]
     short_break_counter: u32,
 }
 
@@ -215,44 +233,67 @@ impl epi::App for TimeFloApp {
             ctx.request_repaint();
         }
 
+        // has the timer just complete?
+        if self.timer.is_over() {
+            // this is a little hacky, but it works!
+            let state_name = format!("{}", self.state).to_lowercase();
+
+            // notify the user
+            Notification::new()
+                .summary("TimeFlo")
+                .body(&format!("Your {} is over!", state_name))
+                .timeout(5000)
+                .show();
+
+            // change to the next
+            self.change_state(self.next_state());
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(&format!(
-                "{:?} ({:.0}s)",
-                self.state,
-                self.timer.remaining_time().as_secs_f32(),
-            ));
+            ui.heading(&format!("{}", self.state,));
+            ui.monospace("23:40");
 
             ui.separator();
 
-            ui.horizontal_wrapped(|ui| {
+            ui.horizontal(|ui| {
                 let timer = &mut self.timer;
                 if !timer.has_started() {
+                    // this will realistically only be shown when the program is
+                    // in "task" mode, because all others automatically start
+                    // the timer
+
                     let begin_button = ui.add(
-                        egui::Button::new("Begin")
+                        egui::Button::new("Begin task")
                             .fill(Color32::BLUE)
                             .stroke((1., Color32::DARK_BLUE)),
                     );
+
                     if begin_button.clicked() {
                         timer.start();
                     }
                 } else if timer.is_paused() {
-                    if ui.button("▶").clicked() {
+                    if ui.button("Resume").clicked() {
                         timer.start();
                     }
                 } else {
-                    if ui.button("⏸").clicked() {
+                    // the timer is currently running
+                    if ui.button("Pause").clicked() {
                         timer.pause();
                     }
                 }
 
+                // show a skip button for breaks
                 if self.state.is_break() || timer.has_started() {
-                    if ui.button("⏭").clicked() || timer.is_over() {
+                    if ui.button("Skip").clicked() {
                         self.change_state(self.next_state());
                     }
                 }
             });
 
-            egui::warn_if_debug_build(ui);
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+                // gear icon
+                ui.button("\u{2699}");
+            });
         });
     }
 }
