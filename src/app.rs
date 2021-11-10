@@ -2,7 +2,7 @@ use std::fmt;
 use std::time::{Duration, Instant};
 
 use eframe::{
-    egui::{self, Color32, Layout},
+    egui::{self, Color32},
     epi,
 };
 
@@ -78,12 +78,25 @@ impl Timer {
     }
 }
 
+impl fmt::Display for Timer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let total_seconds = self.remaining_time().as_secs();
+        write!(f, "{:02}:{:02}", total_seconds / 60, total_seconds % 60)
+    }
+}
+
 #[derive(PartialEq, Copy, Clone, Debug, Deserialize, Serialize)]
 pub enum State {
     Idle,
     Task,
     ShortBreak,
     LongBreak,
+}
+
+impl State {
+    pub fn is_break(&self) -> bool {
+        return *self == State::ShortBreak || *self == State::LongBreak;
+    }
 }
 
 impl Default for State {
@@ -102,12 +115,6 @@ impl fmt::Display for State {
         };
 
         write!(f, "{}", name)
-    }
-}
-
-impl State {
-    pub fn is_break(&self) -> bool {
-        return *self == State::ShortBreak || *self == State::LongBreak;
     }
 }
 
@@ -181,18 +188,6 @@ pub struct Preferences {
     num_short_breaks: u32,
 }
 
-impl Default for Preferences {
-    fn default() -> Self {
-        Self {
-            dark_mode: true,
-            task_minutes: 25.,
-            short_break_minutes: 5.,
-            long_break_minutes: 15.,
-            num_short_breaks: 3,
-        }
-    }
-}
-
 impl Preferences {
     pub fn preferred_duration(&self, state: State) -> Duration {
         let minutes = match state {
@@ -202,6 +197,18 @@ impl Preferences {
             State::LongBreak => self.long_break_minutes,
         };
         Duration::from_secs_f32(minutes * 60.)
+    }
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            dark_mode: true,
+            task_minutes: 25.,
+            short_break_minutes: 5.,
+            long_break_minutes: 15.,
+            num_short_breaks: 3,
+        }
     }
 }
 
@@ -250,8 +257,8 @@ impl epi::App for TimeFloApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(&format!("{}", self.state,));
-            ui.monospace("23:40");
+            ui.heading(&format!("{}", self.state));
+            ui.monospace(&format!("{}", self.timer));
 
             ui.separator();
 
