@@ -2,10 +2,10 @@
 Copyright &copy; 2021 Cassaundra Smith
 
 TimeFlo is an implementation of a
-[Pomodoro&reg;](https://en.wikipedia.org/wiki/Pomodoro_Technique)-like
-timer for breaking out of flow state.
+[Pomodoro&reg;](https://en.wikipedia.org/wiki/Pomodoro_Technique)-like timer for
+breaking out of flow state.
 
-*Description of your TimeFlo timer.*
+![TimeFlo screenshot](docs/screenshot.png)
 
 ## Status and Roadmap
 
