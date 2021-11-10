@@ -44,15 +44,6 @@ process until they have either made significant progress on their project, or
 have entered a flow state strong enough that they no longer feel that they need
 the assistance of TimeFlo.
 
-#### *Use Case 1*
-
-*Describe the first use case here. Be sure to explicitly identify the
-participants, human or otherwise, and explain their roles.*
-
-#### *Use Case 2*
-
-*Etc.*
-
 ## Functional Requirements
 
 Contained within this section are the functional requirements for this project.

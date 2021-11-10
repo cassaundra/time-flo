@@ -1,38 +1,29 @@
 # The TimeFlo Project: Project Plan
 *Cassaundra Smith 2021*
 
-(*Thanks to Chris Gilmore for part of the document template
-for this document.*)
-
 ## Resources
 
-*List the SW tools, equipment, etc needed to execute this
-project. Include programming language tools, build tools,
-test tools, etc.*
+- Local Linux workstation with Rust toolchain.
+- Server to run GitLab CI/CD.
 
-## Work Breakdown
+## Work Breakdown and Schedule
 
-*List the low-level tasks needed to finish this project. A
-good work breakdown will be in terms of small tasks: 1--4
-effort hours each. Identify important dependencies between
-tasks.*
-
-## Schedule
-
-*Give a schedule for completion of the milestones listed in
-the next section. A table is a good structure for this.*
+- Week 1
+    - External planning documentation (1.5 hours)
+- Week 2
+    - CI/CD setup, including GitLab runner server (2 hours)
+- Week 3
+    - Basic implementation (3 hours)
+- Week 4
+    - Polish application (30 minutes)
+    - Implement unit testing (30 minutes)
 
 ## Milestones and Deliverables
 
-*Describe the purpose of this section and outline its
-contents. Describe the milestones on a high level.*
+### Milestone 1: Basic implementation
 
-### *Milestone/Deliverable 1*
+The program functions as expected (weeks 1-3).
 
-*Explain what this milestone consists of. Identify the deliverable or
-deliverables that will be produced at this milestone. Generally describe
-what work will be done leading up to the conclusion of this milestone.*
+### *Milestone 2: Polish and validation*
 
-### *Milestone/Deliverable 2*
-
-*Etc.*
+Improvements are made to the project, and its usage is better verified (week 4).
