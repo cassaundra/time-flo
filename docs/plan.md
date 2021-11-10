@@ -24,6 +24,6 @@
 
 The program functions as expected (weeks 1-3).
 
-### *Milestone 2: Polish and validation*
+### Milestone 2: Polish and validation
 
 Improvements are made to the project, and its usage is better verified (week 4).

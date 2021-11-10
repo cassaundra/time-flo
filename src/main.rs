@@ -7,9 +7,8 @@ use eframe::egui::vec2;
 fn main() {
     let app = time_flo::TimeFloApp::default();
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some(vec2(225., 150.)),
+        initial_window_size: Some(vec2(300., 200.)),
         resizable: false,
-        transparent: true,
         ..Default::default()
     };
     eframe::run_native(Box::new(app), native_options);

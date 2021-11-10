@@ -118,6 +118,43 @@ impl fmt::Display for State {
     }
 }
 
+/// Preferences set by the user.
+#[derive(Deserialize, Serialize)]
+#[serde(default)]
+pub struct Preferences {
+    /// Duration of a task interval in minutes.
+    task_minutes: f32,
+    /// Duration of a short break in minutes.
+    short_break_minutes: f32,
+    /// Duration of a long break in minutes.
+    long_break_minutes: f32,
+    /// Number of short breaks before a long break.
+    num_short_breaks: u32,
+}
+
+impl Preferences {
+    pub fn preferred_duration(&self, state: State) -> Duration {
+        let minutes = match state {
+            State::Idle => 0.,
+            State::Task => self.task_minutes,
+            State::ShortBreak => self.short_break_minutes,
+            State::LongBreak => self.long_break_minutes,
+        };
+        Duration::from_secs_f32(minutes * 60.)
+    }
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            task_minutes: 25.,
+            short_break_minutes: 5.,
+            long_break_minutes: 15.,
+            num_short_breaks: 3,
+        }
+    }
+}
+
 /// State of the TimeFlo program.
 #[derive(Default, Deserialize, Serialize)]
 #[serde(default)]
@@ -134,6 +171,9 @@ pub struct TimeFloApp {
     /// the start of the program.
     #[serde(skip)]
     short_break_counter: u32,
+    /// Whether or not the preferences dialog is visible
+    #[serde(skip)]
+    preferences_visible: bool,
 }
 
 impl TimeFloApp {
@@ -170,45 +210,98 @@ impl TimeFloApp {
             _ => State::Task,
         }
     }
-}
 
-/// Preferences set by the user.
-#[derive(Deserialize, Serialize)]
-#[serde(default)]
-pub struct Preferences {
-    /// Whether or not to display the user interface in dark mode.
-    dark_mode: bool,
-    /// Duration of a task interval in minutes.
-    task_minutes: f32,
-    /// Duration of a short break in minutes.
-    short_break_minutes: f32,
-    /// Duration of a long break in minutes.
-    long_break_minutes: f32,
-    /// Number of short breaks before a long break.
-    num_short_breaks: u32,
-}
+    fn main_view(&mut self, ui: &mut egui::Ui) {
+        ui.heading(&format!("{}", self.state));
+        ui.monospace(&format!("{}", self.timer));
 
-impl Preferences {
-    pub fn preferred_duration(&self, state: State) -> Duration {
-        let minutes = match state {
-            State::Idle => 0.,
-            State::Task => self.task_minutes,
-            State::ShortBreak => self.short_break_minutes,
-            State::LongBreak => self.long_break_minutes,
-        };
-        Duration::from_secs_f32(minutes * 60.)
+        ui.separator();
+
+        ui.horizontal(|ui| {
+            let timer = &mut self.timer;
+            if !timer.has_started() {
+                // this will realistically only be shown when the program is
+                // in "task" mode, because all others automatically start
+                // the timer
+
+                let begin_button = ui.add(
+                    egui::Button::new("Begin task")
+                        .fill(Color32::BLUE)
+                        .stroke((1., Color32::DARK_BLUE)),
+                );
+
+                if begin_button.clicked() {
+                    timer.start();
+                }
+            } else if timer.is_paused() {
+                if ui.button("Resume").clicked() {
+                    timer.start();
+                }
+            } else {
+                // the timer is currently running
+                if ui.button("Pause").clicked() {
+                    timer.pause();
+                }
+            }
+
+            // show a skip button for breaks
+            if self.state.is_break() || timer.has_started() {
+                if ui.button("Skip").clicked() {
+                    self.change_state(self.next_state());
+                }
+            }
+        });
+
+        ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+            // gear icon
+            if ui.button("\u{2699}").clicked() {
+                self.preferences_visible = true;
+            }
+        });
     }
-}
 
-impl Default for Preferences {
-    fn default() -> Self {
-        Self {
-            dark_mode: true,
-            task_minutes: 25.,
-            short_break_minutes: 5.,
-            long_break_minutes: 15.,
-            num_short_breaks: 3,
-        }
+    fn preferences_view(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Preferences");
+
+        ui.separator();
+
+        let prefs = &mut self.preferences;
+
+        // TODO reduce code reuse
+        ui.add(
+            egui::Slider::new(&mut prefs.task_minutes, 1.0..=120.0)
+                .suffix(" min")
+                .text("Task period"),
+        );
+        ui.add(
+            egui::Slider::new(&mut prefs.short_break_minutes, 0.0..=120.0)
+                .suffix(" min")
+                .text("Short break"),
+        );
+        ui.add(
+            egui::Slider::new(&mut prefs.long_break_minutes, 0.0..=120.0)
+                .suffix(" min")
+                .text("Long break"),
+        );
+
+        ui.separator();
+
+        ui.add(
+            egui::Slider::new(&mut prefs.num_short_breaks, 1..=16)
+                .text("Short breaks"),
+        );
+
+        ui.separator();
+
+        ui.horizontal(|ui| {
+            if ui.button("Reset to default").clicked() {
+                self.preferences = Preferences::default();
+            }
+
+            if ui.button("Close").clicked() {
+                self.preferences_visible = false;
+            }
+        });
     }
 }
 
@@ -257,50 +350,11 @@ impl epi::App for TimeFloApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(&format!("{}", self.state));
-            ui.monospace(&format!("{}", self.timer));
-
-            ui.separator();
-
-            ui.horizontal(|ui| {
-                let timer = &mut self.timer;
-                if !timer.has_started() {
-                    // this will realistically only be shown when the program is
-                    // in "task" mode, because all others automatically start
-                    // the timer
-
-                    let begin_button = ui.add(
-                        egui::Button::new("Begin task")
-                            .fill(Color32::BLUE)
-                            .stroke((1., Color32::DARK_BLUE)),
-                    );
-
-                    if begin_button.clicked() {
-                        timer.start();
-                    }
-                } else if timer.is_paused() {
-                    if ui.button("Resume").clicked() {
-                        timer.start();
-                    }
-                } else {
-                    // the timer is currently running
-                    if ui.button("Pause").clicked() {
-                        timer.pause();
-                    }
-                }
-
-                // show a skip button for breaks
-                if self.state.is_break() || timer.has_started() {
-                    if ui.button("Skip").clicked() {
-                        self.change_state(self.next_state());
-                    }
-                }
-            });
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                // gear icon
-                ui.button("\u{2699}");
-            });
+            if self.preferences_visible {
+                self.preferences_view(ui);
+            } else {
+                self.main_view(ui);
+            }
         });
     }
 }
