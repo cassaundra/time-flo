@@ -339,11 +339,13 @@ impl epi::App for TimeFloApp {
             let state_name = format!("{}", self.state).to_lowercase();
 
             // notify the user
+            // TODO handle result
             Notification::new()
                 .summary("TimeFlo")
                 .body(&format!("Your {} is over!", state_name))
                 .timeout(5000)
-                .show();
+                .show()
+                .expect("Could not display notification");
 
             // change to the next
             self.change_state(self.next_state());
@@ -356,5 +358,65 @@ impl epi::App for TimeFloApp {
                 self.main_view(ui);
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_timer() {
+        // test basic operations
+
+        let t1 = Timer::from_duration(Duration::ZERO);
+
+        assert!(!t1.is_paused());
+        assert!(!t1.is_running());
+        assert!(!t1.has_started());
+
+        let mut t2 = Timer {
+            duration: Duration::from_secs(20),
+            accumulated_time: Duration::from_secs(12),
+            start_timestamp: None,
+        };
+
+        assert!(t2.is_paused());
+        assert!(!t2.is_running());
+        assert!(t2.has_started());
+        assert_eq!(Duration::from_secs(8), t2.elapsed());
+
+        t2.start();
+        assert!(!t2.is_paused());
+        assert!(t2.is_running());
+        assert!(t2.has_started());
+
+        // test formatting
+        assert_eq!("00:00", format!("{}", Timer::default()));
+        assert_eq!(
+            "12:34",
+            format!("{}", Timer::from_duration(Duration::from_secs(754)))
+        );
+    }
+
+    #[test]
+    fn test_app() {
+        // test an aspect state changing
+        // TODO more!
+
+        let mut app = TimeFloApp {
+            state: State::Task,
+            short_break_counter: 3,
+            preferences: Preferences {
+                num_short_breaks: 3,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        app.change_state(app.next_state());
+
+        assert_eq!(State::LongBreak, app.state);
+        assert!(app.timer.has_started());
     }
 }

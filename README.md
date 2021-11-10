@@ -10,9 +10,9 @@ breaking out of flow state.
 ## Status and Roadmap
 
 * [x] Requirements complete.
-* [ ] Project plan complete.
+* [x] Project plan complete.
 * [x] Design complete.
-* [ ] Implementation complete.
+* [x] Implementation complete.
 * [ ] Validation complete.
 
 ## Build and Run
