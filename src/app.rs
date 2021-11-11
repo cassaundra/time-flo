@@ -64,13 +64,13 @@ impl fmt::Display for State {
 #[serde(default)]
 struct Preferences {
     /// Duration of a task interval in minutes.
-    task_minutes: f32,
+    pub task_minutes: f32,
     /// Duration of a short break in minutes.
-    short_break_minutes: f32,
+    pub short_break_minutes: f32,
     /// Duration of a long break in minutes.
-    long_break_minutes: f32,
+    pub long_break_minutes: f32,
     /// Number of short breaks before a long break.
-    num_short_breaks: u32,
+    pub num_short_breaks: u32,
 }
 
 impl Preferences {
@@ -152,6 +152,13 @@ impl TimeFloApp {
         }
     }
 
+    // called when preferences have changed
+    fn update_preferences(&mut self) {
+        // update timer duration according to preferences
+        self.timer
+            .set_duration(self.preferences.preferred_duration(self.state));
+    }
+
     fn main_view(&mut self, ui: &mut egui::Ui) {
         ui.heading(&format!("{}", self.state));
         ui.monospace(&format!("{}", self.timer));
@@ -161,10 +168,8 @@ impl TimeFloApp {
         ui.horizontal(|ui| {
             let timer = &mut self.timer;
 
-            if !timer.has_started() {
-                // this will realistically only be shown when the program is
-                // in "task" mode, because all others automatically start
-                // the timer
+            if !self.state.is_break() && !timer.has_started() {
+                // waiting for user to begin task
 
                 let begin_button = ui.add(
                     egui::Button::new("Begin task")
@@ -176,6 +181,7 @@ impl TimeFloApp {
                     timer.start();
                 }
             } else if timer.is_paused() {
+                // the timer is paused
                 if ui.button("Resume").clicked() {
                     timer.start();
                 }
@@ -186,7 +192,7 @@ impl TimeFloApp {
                 }
             }
 
-            // show a skip button for breaks
+            // show a skip button for breaks, or if the timer is running
             if self.state.is_break() || timer.has_started() {
                 if ui.button("Skip").clicked() {
                     self.change_state(self.next_state());
@@ -209,14 +215,15 @@ impl TimeFloApp {
 
         let prefs = &mut self.preferences;
 
-        ui.label("Interval durations");
-        slider!(ui, prefs.task_minutes, "Task period", 1.0..=120.0);
-        slider!(ui, prefs.short_break_minutes, "Short break", 1.0..=120.0);
-        slider!(ui, prefs.long_break_minutes, "Long break", 1.0..=120.0);
+        ui.collapsing("Interval durations", |ui| {
+            slider!(ui, prefs.task_minutes, "Task period", 1.0..=120.0);
+            slider!(ui, prefs.short_break_minutes, "Short break", 1.0..=120.0);
+            slider!(ui, prefs.long_break_minutes, "Long break", 1.0..=120.0);
+        });
 
-        ui.separator();
-
-        slider!(ui, prefs.num_short_breaks, "Short breaks", 1..=16);
+        ui.collapsing("Program flow", |ui| {
+            slider!(ui, prefs.num_short_breaks, "Short breaks", 1..=16);
+        });
 
         ui.separator();
 
@@ -226,6 +233,7 @@ impl TimeFloApp {
             }
 
             if ui.button("Close").clicked() {
+                self.update_preferences();
                 self.preferences_visible = false;
             }
         });

@@ -42,6 +42,10 @@ impl Timer {
         self.start_timestamp = None;
     }
 
+    pub fn set_duration(&mut self, new_duration: Duration) {
+        self.duration = new_duration;
+    }
+
     pub fn elapsed(&self) -> Duration {
         let current_elapsed = match self.start_timestamp {
             Some(start_timestamp) => {
