@@ -25,16 +25,6 @@ project.
 finish, consisting of a continuous cycle of task periods and short/long breaks.
 document.*
 
-## V&amp;V Plan Description
-
-*Describe the purpose of this section and outline its contents. Only a
-few sentences are expected here.*
-
-## Test Plan Description
-
-*Describe the purpose of this section and outline its contents. Only a
-few sentences are expected here.*
-
 ### Scope Of Testing
 
 The underlying functionality of the program will be most rigorously tested,
