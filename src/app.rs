@@ -160,8 +160,19 @@ impl TimeFloApp {
     }
 
     fn main_view(&mut self, ui: &mut egui::Ui) {
-        ui.heading(&format!("{}", self.state));
-        ui.monospace(&format!("{}", self.timer));
+        ui.heading(format!("{}", self.state));
+
+        let timer_color = if self.timer.remaining_time().as_secs() <= 5 {
+            Color32::RED
+        } else {
+            ui.visuals().text_color()
+        };
+
+        ui.add(
+            egui::Label::new(format!("{}", self.timer))
+                .monospace()
+                .text_color(timer_color),
+        );
 
         ui.separator();
 
@@ -216,9 +227,9 @@ impl TimeFloApp {
         let prefs = &mut self.preferences;
 
         ui.collapsing("Interval durations", |ui| {
-            slider!(ui, prefs.task_minutes, "Task period", 1.0..=120.0);
-            slider!(ui, prefs.short_break_minutes, "Short break", 1.0..=120.0);
-            slider!(ui, prefs.long_break_minutes, "Long break", 1.0..=120.0);
+            slider!(ui, prefs.task_minutes, "Task period", 0.5..=120.0);
+            slider!(ui, prefs.short_break_minutes, "Short break", 0.5..=120.0);
+            slider!(ui, prefs.long_break_minutes, "Long break", 0.5..=120.0);
         });
 
         ui.collapsing("Program flow", |ui| {
