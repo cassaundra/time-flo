@@ -5,12 +5,23 @@ use eframe::{
     egui::{self, Color32},
     epi,
 };
-
 use notify_rust::Notification;
-
 use serde::{Deserialize, Serialize};
 
 use crate::timer::Timer;
+
+macro_rules! slider {
+    ($ui:ident, $val:expr, $name:expr, $range:expr) => {
+        $ui.add(::eframe::egui::Slider::new(&mut $val, $range).text($name));
+    };
+    ($ui:ident, $val:expr, $name:expr, $range:expr, $suffix:expr) => {
+        $ui.add(
+            ::eframe::egui::Slider::new(&mut $val, $range)
+                .text($name)
+                .suffix($suffix),
+        );
+    };
+}
 
 #[derive(PartialEq, Copy, Clone, Debug, Deserialize, Serialize)]
 pub enum State {
@@ -22,7 +33,10 @@ pub enum State {
 
 impl State {
     pub fn is_break(&self) -> bool {
-        return *self == State::ShortBreak || *self == State::LongBreak;
+        match self {
+            State::ShortBreak | State::LongBreak => true,
+            _ => false,
+        }
     }
 }
 
@@ -146,6 +160,7 @@ impl TimeFloApp {
 
         ui.horizontal(|ui| {
             let timer = &mut self.timer;
+
             if !timer.has_started() {
                 // this will realistically only be shown when the program is
                 // in "task" mode, because all others automatically start
@@ -194,29 +209,14 @@ impl TimeFloApp {
 
         let prefs = &mut self.preferences;
 
-        // TODO reduce code reuse
-        ui.add(
-            egui::Slider::new(&mut prefs.task_minutes, 1.0..=120.0)
-                .suffix(" min")
-                .text("Task period"),
-        );
-        ui.add(
-            egui::Slider::new(&mut prefs.short_break_minutes, 0.0..=120.0)
-                .suffix(" min")
-                .text("Short break"),
-        );
-        ui.add(
-            egui::Slider::new(&mut prefs.long_break_minutes, 0.0..=120.0)
-                .suffix(" min")
-                .text("Long break"),
-        );
+        ui.label("Interval durations");
+        slider!(ui, prefs.task_minutes, "Task period", 1.0..=120.0);
+        slider!(ui, prefs.short_break_minutes, "Short break", 1.0..=120.0);
+        slider!(ui, prefs.long_break_minutes, "Long break", 1.0..=120.0);
 
         ui.separator();
 
-        ui.add(
-            egui::Slider::new(&mut prefs.num_short_breaks, 1..=16)
-                .text("Short breaks"),
-        );
+        slider!(ui, prefs.num_short_breaks, "Short breaks", 1..=16);
 
         ui.separator();
 

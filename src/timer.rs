@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 
+/// A stateful timer implementation.
 #[derive(Default, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Timer {
     /// The total duration of this timer

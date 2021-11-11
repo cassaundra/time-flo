@@ -17,8 +17,9 @@ breaking out of flow state.
 
 ## Build and Run
 
-Ensure you have the latest Rust toolchain (at least stable).
-Then, install the following dependencies according to the [egui template](https://github.com/emilk/eframe_template/):
+Ensure you have the latest Rust toolchain (at least stable). Then, install the
+following dependencies according to the [egui
+template](https://github.com/emilk/eframe_template/):
 
 On most apt-based Linux distributions:
 ```
@@ -30,11 +31,14 @@ On Fedora:
 sudo dnf install clang clang-devel clang-tools-extra speech-dispatcher-devel libxkbcommon-devel pkg-config openssl-devel
 ```
 
-To build:
-```shell
-cargo build --release
-```
+You should also make sure your Linux desktop follows the XDG specification and
+has a running notification daemon, in order for notifications to work as
+expected.
 
+To run:
+```shell
+cargo run --release
+```
 
 ## Development Docs
 
