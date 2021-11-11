@@ -44,7 +44,7 @@ cargo run --release
 
 Development documentation is available for TimeFlo, including:
 
-* [Requirements Specification](docs/reqs.md)
+* [Requirements Specification](docs/requirements.md)
 * [Project Plan](docs/plan.md)
 * [Design Doc](docs/design.md)
 * [V&amp;V Report](docs/vnv.md)
