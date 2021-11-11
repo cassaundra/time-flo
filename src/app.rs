@@ -5,8 +5,10 @@ use eframe::{
     egui::{self, Color32},
     epi,
 };
-use notify_rust::Notification;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "notifications")]
+use notify_rust::Notification;
 
 use crate::timer::Timer;
 
@@ -286,6 +288,7 @@ impl epi::App for TimeFloApp {
 
             // notify the user
             // TODO handle result
+            #[cfg(feature = "notifications")]
             Notification::new()
                 .summary("TimeFlo")
                 .body(&format!("Your {} is over!", state_name))
