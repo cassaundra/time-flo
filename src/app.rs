@@ -99,23 +99,19 @@ impl Default for Preferences {
 }
 
 /// State of the TimeFlo program.
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Default)]
 #[serde(default)]
 pub struct TimeFloApp {
     /// User-defined preferences.
     preferences: Preferences,
     /// The current state of the program.
-    #[serde(skip)]
     state: State,
     /// The underlying timer.
-    #[serde(skip)]
     timer: Timer,
     /// Number of short breaks which have occurred since the last long break, or
     /// the start of the program.
-    #[serde(skip)]
     short_break_counter: u32,
     /// Whether or not the preferences dialog is visible
-    #[serde(skip)]
     preferences_visible: bool,
 }
 
@@ -266,14 +262,15 @@ impl epi::App for TimeFloApp {
     ) {
         // Load previous app state (if any).
         if let Some(storage) = _storage {
-            *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+            self.preferences =
+                epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
         }
 
         self.change_state(State::Task);
     }
 
     fn save(&mut self, storage: &mut dyn epi::Storage) {
-        epi::set_value(storage, epi::APP_KEY, self);
+        epi::set_value(storage, epi::APP_KEY, &self.preferences);
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
