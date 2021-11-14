@@ -8,7 +8,7 @@ use eframe::{
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "notifications")]
-use notify_rust::Notification;
+use notify_rust::{Notification, NotificationHandle};
 
 #[cfg(feature = "sound")]
 use rodio::Source;
@@ -256,22 +256,27 @@ impl TimeFloApp {
     }
 
     #[cfg(feature = "notifications")]
-    fn show_notification(&self, body: &str) {
-        Notification::new()
+    fn show_notification(
+        &self,
+        body: &str,
+    ) -> crate::Result<NotificationHandle> {
+        let handle = Notification::new()
             .summary("TimeFlo")
             .body(body)
             .timeout(10000)
-            .show()
-            .expect("Could not display notification");
+            .show()?;
+        Ok(handle)
     }
 
     #[cfg(feature = "sound")]
-    fn play_alert_sound(&self) {
+    fn play_alert_sound(&self) -> crate::Result<()> {
         if let Some(audio_handle) = &self.audio_handle {
-            let file = std::fs::File::open("resources/alert.ogg").unwrap();
-            let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
-            audio_handle.play_raw(source.convert_samples()).unwrap();
+            let file = std::fs::File::open("resources/alert.ogg")?;
+            let source = rodio::Decoder::new(BufReader::new(file))?;
+            audio_handle.play_raw(source.convert_samples())?;
         }
+
+        Ok(())
     }
 }
 
@@ -324,11 +329,12 @@ impl epi::App for TimeFloApp {
                     State::LongBreak => "Your long break is over.",
                     _ => "",
                 };
-                self.show_notification(message);
+                self.show_notification(message)
+                    .expect("Could not show notification");
             }
 
             #[cfg(feature = "sound")]
-            self.play_alert_sound();
+            self.play_alert_sound().expect("Could not play sound");
 
             // change to the next
             self.change_state(self.next_state());

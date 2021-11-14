@@ -5,4 +5,7 @@
 mod app;
 pub use app::TimeFloApp;
 
+mod error;
+pub use error::*;
+
 pub mod timer;

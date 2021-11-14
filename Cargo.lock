@@ -2156,6 +2156,7 @@ dependencies = [
  "rodio",
  "serde",
  "serde_millis",
+ "thiserror",
 ]
 
 [[package]]
