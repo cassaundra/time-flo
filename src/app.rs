@@ -1,5 +1,5 @@
-use std::fmt;
 use std::time::Duration;
+use std::{fmt, io::BufReader};
 
 use eframe::{
     egui::{self, Color32},
@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "notifications")]
 use notify_rust::Notification;
+
+#[cfg(feature = "sound")]
+use rodio::Source;
 
 use crate::timer::Timer;
 
@@ -100,7 +103,6 @@ impl Default for Preferences {
 
 /// State of the TimeFlo program.
 #[derive(Default)]
-#[serde(default)]
 pub struct TimeFloApp {
     /// User-defined preferences.
     preferences: Preferences,
@@ -113,6 +115,11 @@ pub struct TimeFloApp {
     short_break_counter: u32,
     /// Whether or not the preferences dialog is visible
     preferences_visible: bool,
+    /// Audio output stream
+    #[cfg(feature = "sound")]
+    audio_handle: Option<rodio::OutputStreamHandle>,
+    #[cfg(feature = "sound")]
+    audio_stream: Option<rodio::OutputStream>,
 }
 
 impl TimeFloApp {
@@ -247,6 +254,25 @@ impl TimeFloApp {
             }
         });
     }
+
+    #[cfg(feature = "notifications")]
+    fn show_notification(&self, body: &str) {
+        Notification::new()
+            .summary("TimeFlo")
+            .body(body)
+            .timeout(10000)
+            .show()
+            .expect("Could not display notification");
+    }
+
+    #[cfg(feature = "sound")]
+    fn play_alert_sound(&self) {
+        if let Some(audio_handle) = &self.audio_handle {
+            let file = std::fs::File::open("resources/alert.ogg").unwrap();
+            let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
+            audio_handle.play_raw(source.convert_samples()).unwrap();
+        }
+    }
 }
 
 impl epi::App for TimeFloApp {
@@ -267,6 +293,15 @@ impl epi::App for TimeFloApp {
         }
 
         self.change_state(State::Task);
+
+        // initialize audio
+        #[cfg(feature = "sound")]
+        {
+            let (audio_stream, handle) =
+                rodio::OutputStream::try_default().unwrap();
+            self.audio_stream = Some(audio_stream);
+            self.audio_handle = Some(handle);
+        }
     }
 
     fn save(&mut self, storage: &mut dyn epi::Storage) {
@@ -280,18 +315,20 @@ impl epi::App for TimeFloApp {
 
         // has the timer just complete?
         if self.timer.is_over() {
-            // this is a little hacky, but it works!
-            let state_name = format!("{}", self.state).to_lowercase();
-
             // notify the user
-            // TODO handle result
             #[cfg(feature = "notifications")]
-            Notification::new()
-                .summary("TimeFlo")
-                .body(&format!("Your {} is over!", state_name))
-                .timeout(5000)
-                .show()
-                .expect("Could not display notification");
+            {
+                let message = match self.state {
+                    State::Task => "Time to take a break! \u{1F389}",
+                    State::ShortBreak => "Your short break is over.",
+                    State::LongBreak => "Your long break is over.",
+                    _ => "",
+                };
+                self.show_notification(message);
+            }
+
+            #[cfg(feature = "sound")]
+            self.play_alert_sound();
 
             // change to the next
             self.change_state(self.next_state());
