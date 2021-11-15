@@ -40,6 +40,9 @@ To run:
 cargo run --release
 ```
 
+If the program does not function as expected with sound and notifications,
+please open an issue and try compiling with `--no-default-features`.
+
 ## Development Docs
 
 Development documentation is available for TimeFlo, including:
