@@ -5,8 +5,14 @@ use eframe::{
     egui::{self, Color32},
     epi,
 };
-use notify_rust::Notification;
+use log::warn;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "notifications")]
+use notify_rust::{Notification, NotificationHandle};
+
+#[cfg(feature = "sound")]
+use rodio::Source;
 
 use crate::timer::Timer;
 
@@ -97,24 +103,24 @@ impl Default for Preferences {
 }
 
 /// State of the TimeFlo program.
-#[derive(Default, Deserialize, Serialize)]
-#[serde(default)]
+#[derive(Default)]
 pub struct TimeFloApp {
     /// User-defined preferences.
     preferences: Preferences,
     /// The current state of the program.
-    #[serde(skip)]
     state: State,
     /// The underlying timer.
-    #[serde(skip)]
     timer: Timer,
     /// Number of short breaks which have occurred since the last long break, or
     /// the start of the program.
-    #[serde(skip)]
     short_break_counter: u32,
     /// Whether or not the preferences dialog is visible
-    #[serde(skip)]
     preferences_visible: bool,
+    /// Audio output stream
+    #[cfg(feature = "sound")]
+    audio_handle: Option<rodio::OutputStreamHandle>,
+    #[cfg(feature = "sound")]
+    audio_stream: Option<rodio::OutputStream>,
 }
 
 impl TimeFloApp {
@@ -160,8 +166,19 @@ impl TimeFloApp {
     }
 
     fn main_view(&mut self, ui: &mut egui::Ui) {
-        ui.heading(&format!("{}", self.state));
-        ui.monospace(&format!("{}", self.timer));
+        ui.heading(format!("{}", self.state));
+
+        let timer_color = if self.timer.remaining_time().as_secs() <= 5 {
+            Color32::RED
+        } else {
+            ui.visuals().text_color()
+        };
+
+        ui.add(
+            egui::Label::new(format!("{}", self.timer))
+                .monospace()
+                .text_color(timer_color),
+        );
 
         ui.separator();
 
@@ -216,9 +233,9 @@ impl TimeFloApp {
         let prefs = &mut self.preferences;
 
         ui.collapsing("Interval durations", |ui| {
-            slider!(ui, prefs.task_minutes, "Task period", 1.0..=120.0);
-            slider!(ui, prefs.short_break_minutes, "Short break", 1.0..=120.0);
-            slider!(ui, prefs.long_break_minutes, "Long break", 1.0..=120.0);
+            slider!(ui, prefs.task_minutes, "Task period", 0.5..=120.0);
+            slider!(ui, prefs.short_break_minutes, "Short break", 0.5..=120.0);
+            slider!(ui, prefs.long_break_minutes, "Long break", 0.5..=120.0);
         });
 
         ui.collapsing("Program flow", |ui| {
@@ -238,6 +255,32 @@ impl TimeFloApp {
             }
         });
     }
+
+    #[cfg(feature = "notifications")]
+    fn show_notification(
+        &self,
+        body: &str,
+    ) -> crate::Result<NotificationHandle> {
+        let handle = Notification::new()
+            .summary("TimeFlo")
+            .body(body)
+            .timeout(10000)
+            .show()?;
+        Ok(handle)
+    }
+
+    #[cfg(feature = "sound")]
+    fn play_alert_sound(&self) -> crate::Result<()> {
+        use std::io::BufReader;
+
+        if let Some(audio_handle) = &self.audio_handle {
+            let file = std::fs::File::open("resources/alert.ogg")?;
+            let source = rodio::Decoder::new(BufReader::new(file))?;
+            audio_handle.play_raw(source.convert_samples())?;
+        }
+
+        Ok(())
+    }
 }
 
 impl epi::App for TimeFloApp {
@@ -253,14 +296,27 @@ impl epi::App for TimeFloApp {
     ) {
         // Load previous app state (if any).
         if let Some(storage) = _storage {
-            *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+            self.preferences =
+                epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
         }
 
         self.change_state(State::Task);
+
+        // initialize audio
+        #[cfg(feature = "sound")]
+        match rodio::OutputStream::try_default() {
+            Ok((audio_stream, handle)) => {
+                self.audio_stream = Some(audio_stream);
+                self.audio_handle = Some(handle);
+            }
+            Err(err) => {
+                warn!("Could not acquire audio output stream: {:?}", err);
+            }
+        }
     }
 
     fn save(&mut self, storage: &mut dyn epi::Storage) {
-        epi::set_value(storage, epi::APP_KEY, self);
+        epi::set_value(storage, epi::APP_KEY, &self.preferences);
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
@@ -270,17 +326,25 @@ impl epi::App for TimeFloApp {
 
         // has the timer just complete?
         if self.timer.is_over() {
-            // this is a little hacky, but it works!
-            let state_name = format!("{}", self.state).to_lowercase();
-
             // notify the user
-            // TODO handle result
-            Notification::new()
-                .summary("TimeFlo")
-                .body(&format!("Your {} is over!", state_name))
-                .timeout(5000)
-                .show()
-                .expect("Could not display notification");
+            #[cfg(feature = "notifications")]
+            {
+                let message = match self.state {
+                    State::Task => "Time to take a break! \u{1F389}",
+                    State::ShortBreak => "Your short break is over.",
+                    State::LongBreak => "Your long break is over.",
+                    _ => "",
+                };
+
+                if let Err(err) = self.show_notification(message) {
+                    warn!("Could not show notification: {:?}", err);
+                }
+            }
+
+            #[cfg(feature = "sound")]
+            if let Err(err) = self.play_alert_sound() {
+                warn!("Could not play sound: {:?}", err);
+            }
 
             // change to the next
             self.change_state(self.next_state());

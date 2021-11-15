@@ -5,6 +5,8 @@
 use eframe::egui::vec2;
 
 fn main() {
+    env_logger::init();
+
     let app = time_flo::TimeFloApp::default();
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(vec2(300., 200.)),
