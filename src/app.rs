@@ -1,10 +1,11 @@
+use std::fmt;
 use std::time::Duration;
-use std::{fmt, io::BufReader};
 
 use eframe::{
     egui::{self, Color32},
     epi,
 };
+use log::warn;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "notifications")]
@@ -270,6 +271,8 @@ impl TimeFloApp {
 
     #[cfg(feature = "sound")]
     fn play_alert_sound(&self) -> crate::Result<()> {
+        use std::io::BufReader;
+
         if let Some(audio_handle) = &self.audio_handle {
             let file = std::fs::File::open("resources/alert.ogg")?;
             let source = rodio::Decoder::new(BufReader::new(file))?;
@@ -301,11 +304,14 @@ impl epi::App for TimeFloApp {
 
         // initialize audio
         #[cfg(feature = "sound")]
-        {
-            let (audio_stream, handle) =
-                rodio::OutputStream::try_default().unwrap();
-            self.audio_stream = Some(audio_stream);
-            self.audio_handle = Some(handle);
+        match rodio::OutputStream::try_default() {
+            Ok((audio_stream, handle)) => {
+                self.audio_stream = Some(audio_stream);
+                self.audio_handle = Some(handle);
+            }
+            Err(err) => {
+                warn!("Could not acquire audio output stream: {:?}", err);
+            }
         }
     }
 
@@ -329,12 +335,16 @@ impl epi::App for TimeFloApp {
                     State::LongBreak => "Your long break is over.",
                     _ => "",
                 };
-                self.show_notification(message)
-                    .expect("Could not show notification");
+
+                if let Err(err) = self.show_notification(message) {
+                    warn!("Could not show notification: {:?}", err);
+                }
             }
 
             #[cfg(feature = "sound")]
-            self.play_alert_sound().expect("Could not play sound");
+            if let Err(err) = self.play_alert_sound() {
+                warn!("Could not play sound: {:?}", err);
+            }
 
             // change to the next
             self.change_state(self.next_state());

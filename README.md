@@ -40,8 +40,10 @@ To run:
 cargo run --release
 ```
 
-If the program does not function as expected with sound and notifications,
-please open an issue and try compiling with `--no-default-features`.
+If the program does not function as expected, please try compiling with
+`RUST_LOG=debug` environment variable set, and open an issue with the log
+included. If you do not mind using the program with limited functionality, you
+can also compile with `--no-default-features`.
 
 ## Development Docs
 
