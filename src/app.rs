@@ -9,7 +9,7 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "notifications")]
-use notify_rust::{Notification, NotificationHandle};
+use notify_rust::Notification;
 
 #[cfg(feature = "sound")]
 use rodio::Source;
@@ -257,16 +257,13 @@ impl TimeFloApp {
     }
 
     #[cfg(feature = "notifications")]
-    fn show_notification(
-        &self,
-        body: &str,
-    ) -> crate::Result<NotificationHandle> {
-        let handle = Notification::new()
+    fn show_notification(&self, body: &str) -> crate::Result<()> {
+        Notification::new()
             .summary("TimeFlo")
             .body(body)
             .timeout(10000)
             .show()?;
-        Ok(handle)
+        Ok(())
     }
 
     #[cfg(feature = "sound")]
