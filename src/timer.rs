@@ -57,15 +57,15 @@ impl Timer {
     }
 
     pub fn remaining_time(&self) -> Duration {
-        return self.duration.saturating_sub(self.elapsed());
+        self.duration.saturating_sub(self.elapsed())
     }
 
     pub fn has_started(&self) -> bool {
-        return self.elapsed() > Duration::ZERO;
+        self.elapsed() > Duration::ZERO
     }
 
     pub fn is_over(&self) -> bool {
-        return self.elapsed() >= self.duration;
+        self.elapsed() >= self.duration
     }
 
     pub fn is_running(&self) -> bool {

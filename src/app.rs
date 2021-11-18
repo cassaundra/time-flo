@@ -39,10 +39,7 @@ pub enum State {
 
 impl State {
     pub fn is_break(&self) -> bool {
-        match self {
-            State::ShortBreak | State::LongBreak => true,
-            _ => false,
-        }
+        matches!(self, State::ShortBreak | State::LongBreak)
     }
 }
 
@@ -210,10 +207,10 @@ impl TimeFloApp {
             }
 
             // show a skip button for breaks, or if the timer is running
-            if self.state.is_break() || timer.has_started() {
-                if ui.button("Skip").clicked() {
-                    self.change_state(self.next_state());
-                }
+            if (self.state.is_break() || timer.has_started())
+                && ui.button("Skip").clicked()
+            {
+                self.change_state(self.next_state());
             }
         });
 
@@ -289,12 +286,12 @@ impl epi::App for TimeFloApp {
         &mut self,
         _ctx: &egui::CtxRef,
         _frame: &mut epi::Frame<'_>,
-        _storage: Option<&dyn epi::Storage>,
+        storage: Option<&dyn epi::Storage>,
     ) {
         // Load previous app state (if any).
-        if let Some(storage) = _storage {
+        if let Some(storage) = storage {
             self.preferences =
-                epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+                epi::get_value(storage, epi::APP_KEY).unwrap_or_default();
         }
 
         self.change_state(State::Task);
